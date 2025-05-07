@@ -1,0 +1,40 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.pem
+
+# Local Environment Variables
+.env*.local
+.env
+
+# Prisma
+# Ignore all files in migrations except for migration_lock.toml
+# prisma/migrations/*/*.sql
+# prisma/dev.db
+# prisma/dev.db-journal
+
+# SQLite
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Wrangler / Cloudflare
+.wrangler/
+
