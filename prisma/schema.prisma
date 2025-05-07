@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // Development: sqlite
+  // provider = "postgresql" // Production: postgresql
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?   // For OAuth profile picture
+  password      String?   // For email/password auth (hashed)
+  accounts      Account[] // For NextAuth.js OAuth
+  sessions      Session[] // For NextAuth.js sessions
+  authenticators Authenticator[] // For NextAuth.js TOTP MFA
+
+  // Application-specific fields
+  stripeCustomerId  String?   @unique
+  stripeSubscriptionId String? @unique
+  stripePriceId     String?
+  stripeCurrentPeriodEnd DateTime?
+  plan              PlanType  @default(FREE)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  forms         FormData[]
+  documents     Document[]
+  aiQueryLogs   AiQueryLog[]
+}
+
+// NextAuth.js specific models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? 
+  access_token      String? 
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? 
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+}
+
+model Authenticator {
+  credentialID         String  @unique // Corresponds to Authenticator.id in NextAuth.js
+  userId               String
+  providerAccountId    String // Not directly used by NextAuth TOTP but good for consistency
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum PlanType {
+  FREE
+  BASIC
+  PREMIUM
+}
+
+model FormData {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  formType  String   // e.g., "CUSTODY_AGREEMENT_V1"
+  data      Json     // JSON object containing all collected form fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  generatedDocument Document? // Relation to the document generated from this form data
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  formDataId  String?  @unique // Optional: link to the FormData used to generate this
+  formData    FormData? @relation(fields: [formDataId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  name        String   // User-friendly name or generated name for the document
+  storagePath String   // Path to the file in Supabase Storage
+  fileType    String   @default("application/pdf")
+  size        Int?     // File size in bytes
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AiQueryLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt    String   
+  response  String   
+  modelUsed String   // e.g., "gpt-4", "gpt-3.5-turbo"
+  tokensUsed Int?    // Optional: to track token usage
+  timestamp DateTime @default(now())
+}
+
