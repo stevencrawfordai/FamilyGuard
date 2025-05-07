@@ -1,0 +1,106 @@
+# This is a basic workflow to help you get started with Actions.
+
+name: Deploy to Vercel
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push events but only for the main branch
+  push:
+    branches: [ main ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "deploy"
+  deploy:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+
+      # Sets up Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20" # Or your project's Node.js version
+          cache: "pnpm"
+
+      # Installs pnpm
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      # Installs dependencies
+      - name: Install dependencies
+        run: pnpm install
+
+      # Linting (optional, but good practice)
+      - name: Lint code
+        run: pnpm run lint
+
+      # Type checking (optional, but good practice for TypeScript projects)
+      # - name: Type check
+      #   run: pnpm run type-check # Assuming you have a type-check script
+
+      # Testing (optional, but good practice)
+      # - name: Run tests
+      #   run: pnpm run test # Assuming you have a test script
+
+      # Build the Next.js application
+      - name: Build Next.js application
+        run: pnpm run build
+        env:
+          # Pass environment variables required for the build process
+          # These should be configured as secrets in your GitHub repository settings
+          DATABASE_URL: ${{ secrets.DATABASE_URL }} # Example for production DB (if needed at build time)
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          # Add other build-time environment variables here
+
+      # Deploy to Vercel
+      # This step assumes you have the Vercel CLI installed and configured
+      # or you are using a Vercel GitHub integration which handles deployment automatically.
+      # For Vercel GitHub integration, this explicit deploy step might not be needed if Vercel auto-deploys from the main branch.
+      # If using Vercel CLI for deployment:
+      # - name: Deploy to Vercel
+      #   run: npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
+      #   env:
+      #     VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      #     VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      # If relying on Vercel for GitHub (recommended for Next.js):
+      # No explicit deploy step is needed here. Vercel will pick up the push to `main`
+      # and deploy automatically if the GitHub repository is linked to a Vercel project.
+      # Ensure your Vercel project settings are configured to build from the `main` branch
+      # and that environment variables are set in Vercel project settings.
+
+      - name: Vercel Deployment Info
+        run: |
+          echo "Workflow complete. If your GitHub repository is linked to Vercel,"
+          echo "a deployment should be triggered automatically."
+          echo "Ensure all necessary environment variables are set in your Vercel project settings."
+          echo "These include (but are not limited to):"
+          echo "- DATABASE_URL (for production database)"
+          echo "- NEXTAUTH_URL (your production application URL)"
+          echo "- NEXTAUTH_SECRET"
+          echo "- GOOGLE_CLIENT_ID"
+          echo "- GOOGLE_CLIENT_SECRET"
+          echo "- OPENAI_API_KEY"
+          echo "- STRIPE_SECRET_KEY"
+          echo "- STRIPE_PUBLISHABLE_KEY"
+          echo "- STRIPE_WEBHOOK_SECRET"
+          echo "- STRIPE_BASIC_PLAN_PRICE_ID"
+          echo "- STRIPE_PREMIUM_PLAN_PRICE_ID"
+          echo "- SUPABASE_URL (if used)"
+          echo "- SUPABASE_ANON_KEY (if used)"
+          echo "- SUPABASE_SERVICE_ROLE_KEY (if used)"
+
